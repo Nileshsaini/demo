@@ -11,7 +11,6 @@ from rest_framework.decorators import api_view,parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser
 import os
-# from plotly.offline.offline import _plot_html
 
 
 # class Graph(TemplateView):
@@ -97,45 +96,12 @@ def writeGraph(cabinName):
 	return(traces)
 
 def home(request):
-	
-	# unique = df.CabinName.unique()
-	# np.savetxt("unique.txt", unique, fmt='%5s')
-	# using class function
-	# g = Graph()
-	# context = g.get_context_data()
-	
-	# N = 100
-	# random_x = np.linspace(0, 1, N)
-	# random_y0 = np.random.randn(N)+5
-	# random_y1 = np.random.randn(N)
-	# random_y2 = np.random.randn(N)-5
-
-	# # Create traces
-	# trace0 = go.Scatter(
-	#     x = random_x,
-	#     y = random_y0,
-	#     mode = 'markers',
-	#     name = 'markers'
-	# )
-	# trace1 = go.Scatter(
-	#     x = random_x,
-	#     y = random_y1,
-	#     mode = 'lines+markers',
-	#     name = 'lines+markers'
-	# )
-	# trace2 = go.Scatter(
-	#     x = random_x,
-	#     y = random_y2,
-	#     mode = 'lines',
-	#     name = 'lines'
-	# )
-
-	# data=go.Data([trace0, trace1, trace2])
 	data=go.Data(writeGraph('The View'))
 	layout=go.Layout(title="The View", xaxis={'title':'Months'}, yaxis={'title':'No. of Days Available'})
 	figure=go.Figure(data=data,layout=layout)
 	config={'showLink': False,
-		'modeBarButtonsToRemove':  ['sendDataToCloud']
+			'displayModeBar': False
+		# 'modeBarButtonsToRemove':  ['sendDataToCloud']
 	}
 	# cntxt = opy.plot(figure, auto_open=False, output_type='div')
 	cntxt = opy.plot(figure, include_plotlyjs=False, output_type='div', config=config)
