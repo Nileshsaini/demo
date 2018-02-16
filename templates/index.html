@@ -34,6 +34,11 @@
     	.light-blue.lighten-1 {
 		    background-color: #4e342e !important;
 		}
+		#preload{
+			display: table;
+			margin-right: auto;
+			margin-left: auto;
+		}
     </style>
 </head>
 <body>
@@ -69,10 +74,10 @@
 	 			<form class="col s12">
 			      <div class="row">
 			        <div class="input-field col s12">
-					    <select class="icons">
-					      <option value="" disabled selected>Choose your option</option>
-					      <option value="" data-icon="../static/images/sample-1.jpg" class="left circle">Historical</option>
-					      <option value="" data-icon="../static/images/office.jpg" class="left circle">Prediction</option>
+					    <select class="icons" id="cabinName">
+					      <!-- <option value="" disabled selected>Choose your option</option> -->
+					      <option value="The View" data-icon="../static/images/sample-1.jpg" class="left circle" selected>The View</option>
+					      <option value="Whispering Creek" data-icon="../static/images/office.jpg" class="left circle">Whispering Creek</option>
 					    </select>
 					    <label>Choose from the dropdown</label>
 					  </div>
@@ -87,13 +92,51 @@
 	 </div>
 	 <div class="row">
 	 	<div class="col s8 offset-s1">
-	 		<img src="" id="image" class="materialboxed responsive-img">
-	 		{{ cntxt|safe }}
-	 		<!-- {% if graph %}
-			<div style="width:600;height:500">
-			{{ graph|safe }}
+	 		<div class="preloader-wrapper big active" id="preload">
+		      <div class="spinner-layer spinner-blue">
+		        <div class="circle-clipper left">
+		          <div class="circle"></div>
+		        </div><div class="gap-patch">
+		          <div class="circle"></div>
+		        </div><div class="circle-clipper right">
+		          <div class="circle"></div>
+		        </div>
+		      </div>
+
+		      <div class="spinner-layer spinner-red">
+		        <div class="circle-clipper left">
+		          <div class="circle"></div>
+		        </div><div class="gap-patch">
+		          <div class="circle"></div>
+		        </div><div class="circle-clipper right">
+		          <div class="circle"></div>
+		        </div>
+		      </div>
+
+		      <div class="spinner-layer spinner-yellow">
+		        <div class="circle-clipper left">
+		          <div class="circle"></div>
+		        </div><div class="gap-patch">
+		          <div class="circle"></div>
+		        </div><div class="circle-clipper right">
+		          <div class="circle"></div>
+		        </div>
+		      </div>
+
+		      <div class="spinner-layer spinner-green">
+		        <div class="circle-clipper left">
+		          <div class="circle"></div>
+		        </div><div class="gap-patch">
+		          <div class="circle"></div>
+		        </div><div class="circle-clipper right">
+		          <div class="circle"></div>
+		        </div>
+		      </div>
+		    </div>
+	 		<div id="resultarea">
+		 		<img src="" id="image" class="materialboxed responsive-img">
+		 		{{ cntxt|safe }}
 			</div>
-			{% endif %} -->
 	 	</div>
 	 	<div class="col s2">
 	 		<blockquote>
@@ -108,7 +151,27 @@
 <script type="text/javascript">
 
 $(document).ready(function() {
+	$('#preload').hide();
   	$('select').material_select();
+  	$('#cabinName').change(function(){
+  		var cabinName = $("#cabinName").val();
+  		$('#resultarea').hide();
+  		$('#preload').show();
+  		$.ajax({
+			  type: "GET",
+			  url: "graph/",
+			  data: {'cabinName' : cabinName},
+			  dataType:'json',
+			  success: function(response, status){
+			  	$('#preload').hide();
+			    $('#resultarea').show();
+			    $("#resultarea").html(response.cntxt);
+			  },
+			  error: function(errMsg){
+			  	console.log(errMsg);
+			  }
+  		});
+  	});
 });
 function loadImg(){
 	var url = 'http://tennesseeapplication-env.ezznr2hdj8.us-east-2.elasticbeanstalk.com/efs/.temporary/cabinsusa-The-Only-TenISee-Cabin-Rental-2018-02-11-12-10-43.png';

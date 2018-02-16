@@ -5,9 +5,12 @@ import pandas as pd
 import plotly.offline as opy
 import plotly.graph_objs as go
 from django.views.generic import TemplateView
-# from copy import deepcopy
+import json
+from django.core import serializers
+from rest_framework.decorators import api_view,parser_classes
+from rest_framework.response import Response
+from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser
 import os
-
 # from plotly.offline.offline import _plot_html
 
 
@@ -31,6 +34,14 @@ import os
 
 #         return context
 
+
+def getSum(n):
+	sum = 0
+	n = int(n)
+	while(n!=0):
+		sum = sum+n%10
+		n=n/10
+	return(sum)
 
 def writeGraph(cabinName):
 	BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -61,21 +72,7 @@ def writeGraph(cabinName):
 			mysheet['CabinName2'] = c + '-' + mysheet['CabinName'].astype(str)
 			df = df.append(mysheet, ignore_index=True)
 	# df.to_csv('out.csv', encoding='utf-8')
-	return(df.loc[df['CabinName'] == cabinName])
-
-def getSum(n):
-	sum = 0
-	n = int(n)
-	while(n!=0):
-		sum = sum+n%10
-		n=n/10
-	return(sum)
-
-def home(request):
-	# using class function
-	# g = Graph()
-	# context = g.get_context_data()
-	df = writeGraph('The View')
+	df = df.loc[df['CabinName'] == cabinName]
 	df = df.reset_index(drop=True)
 	# print df
 	df2 = pd.DataFrame()
@@ -97,6 +94,16 @@ def home(request):
 		)
 		traces.append(c)
 		# print traces
+	return(traces)
+
+def home(request):
+	
+	# unique = df.CabinName.unique()
+	# np.savetxt("unique.txt", unique, fmt='%5s')
+	# using class function
+	# g = Graph()
+	# context = g.get_context_data()
+	
 	# N = 100
 	# random_x = np.linspace(0, 1, N)
 	# random_y0 = np.random.randn(N)+5
@@ -124,8 +131,8 @@ def home(request):
 	# )
 
 	# data=go.Data([trace0, trace1, trace2])
-	data=go.Data(traces)
-	layout=go.Layout(title="The View", xaxis={'title':'Months'}, yaxis={'title':'No. of Days not Booked'})
+	data=go.Data(writeGraph('The View'))
+	layout=go.Layout(title="The View", xaxis={'title':'Months'}, yaxis={'title':'No. of Days Available'})
 	figure=go.Figure(data=data,layout=layout)
 	config={'showLink': False,
 		'modeBarButtonsToRemove':  ['sendDataToCloud']
@@ -137,3 +144,54 @@ def home(request):
 	}
 	return render(request, 'index.html', cntxt)
 
+@api_view(['GET'])
+def graph(request):
+	cabinName = request.GET.get('cabinName')
+	BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+	a = os.path.join(BASE_DIR, '2018_02_10_Data_Scraping_Output.xlsx')
+	scrapeWB = pd.ExcelFile(a)
+	df = pd.DataFrame()
+	SheetNames = scrapeWB.sheet_names
+	for Name in SheetNames:
+		mysheet = scrapeWB.parse(Name) #dataframe
+		if (mysheet.empty):
+			print("WARNING: Empty data", Name, len(mysheet))
+		else:
+			mysheet = mysheet[pd.notnull(mysheet["CabinName"])]
+			mysheet.reset_index(drop=True, inplace=True)
+			c = Name.encode('utf-8')
+			mysheet['CabinName2'] = c + '-' + mysheet['CabinName'].astype(str)
+			df = df.append(mysheet, ignore_index=True)
+	# df.to_csv('out.csv', encoding='utf-8')
+	df = df.loc[df['CabinName'] == cabinName]
+	df = df.reset_index(drop=True)
+	# print df
+	df2 = pd.DataFrame()
+	df2['months'] = ['monthAvailabe_1','monthAvailabe_2','monthAvailabe_3','monthAvailabe_4','monthAvailabe_5','monthAvailabe_6','monthAvailabe_7']
+	df2['value'] = [0,0,0,0,0,0,0]
+	traces = []
+	for i in range(0,len(df['CabinName2'])):
+		for j in range(0,len(df2)):
+			z = df['monthAvailabe_'+str(j+1)][i].split('\'')
+			sum = getSum(z[1])
+			df2['value'][j] = 30 - sum
+			# print df['monthAvailabe_'+str(t)][i]
+		# print df2
+		c = go.Scatter(
+			x = list(df2['months'].values),
+			y = list(df2['value'].values),
+			mode = 'lines+markers',
+			name = str(df['CabinName2'][i])
+		)
+		traces.append(c)
+		# print traces
+	data=go.Data(traces)
+	layout=go.Layout(title=cabinName, xaxis={'title':'Months'}, yaxis={'title':'No. of Days Available'})
+	figure=go.Figure(data=data,layout=layout)
+	config={'showLink': False,
+		'modeBarButtonsToRemove':  ['sendDataToCloud']
+	}
+	# cntxt = opy.plot(figure, auto_open=False, output_type='div')
+	cntxt = opy.plot(figure, include_plotlyjs=False, output_type='div', config=config)
+	# cntxt = serializers.serialize('json',cntxt)
+	return Response({"cntxt":cntxt})
