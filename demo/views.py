@@ -155,7 +155,8 @@ def graph(request):
 	layout=go.Layout(title=cabinName, xaxis={'title':'Months'}, yaxis={'title':'No. of Days Available'})
 	figure=go.Figure(data=data,layout=layout)
 	config={'showLink': False,
-		'modeBarButtonsToRemove':  ['sendDataToCloud']
+			'displayModeBar': False
+		# 'modeBarButtonsToRemove':  ['sendDataToCloud']
 	}
 	# cntxt = opy.plot(figure, auto_open=False, output_type='div')
 	cntxt = opy.plot(figure, include_plotlyjs=False, output_type='div', config=config)
